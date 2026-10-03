@@ -122,18 +122,14 @@ const DEFAULT_VOICES = [
 
 // Helper to determine the effective API key (request header takes precedence, then server env, then built-in)
 function getApiKey(req) {
-  const headerKey = req.headers['x-api-key'];
-  if (headerKey && typeof headerKey === 'string' && headerKey.trim() !== '') {
-    return headerKey.trim();
-  }
   dotenv.config();
-  return process.env.ELEVENLABS_API_KEY || 'sk_82c6228b2df0e1eba1934b4c2e7a7bc4794a6aa965044b82';
+  return process.env.ELEVENLABS_API_KEY || '';
 }
 
 // Check configuration status
 app.get('/api/status', (req, res) => {
   dotenv.config();
-  const key = process.env.ELEVENLABS_API_KEY || 'sk_82c6228b2df0e1eba1934b4c2e7a7bc4794a6aa965044b82';
+  const key = process.env.ELEVENLABS_API_KEY || '';
   const hasEnvKey = Boolean(key && key.trim() !== '');
   res.json({
     status: 'online',

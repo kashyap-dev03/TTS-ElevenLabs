@@ -4,7 +4,7 @@
 
 // State Management
 const state = {
-  apiKey: localStorage.getItem('elevenlabs_api_key') || '',
+  apiKey: '',
   hasEnvKey: false,
   models: [],
   voices: [],
@@ -187,9 +187,7 @@ async function checkServerStatus() {
 // Fetch available ElevenLabs models
 async function fetchModels() {
   try {
-    const headers = {};
-    if (state.apiKey) headers['x-api-key'] = state.apiKey;
-    const res = await fetch('/api/models', { headers });
+    const res = await fetch('/api/models');
     if (res.ok) {
       const data = await res.json();
       if (data.models && Array.isArray(data.models)) {
@@ -229,9 +227,7 @@ function renderModelOptions() {
 // Fetch available voices
 async function fetchVoices() {
   try {
-    const headers = {};
-    if (state.apiKey) headers['x-api-key'] = state.apiKey;
-    const res = await fetch('/api/voices', { headers });
+    const res = await fetch('/api/voices');
     if (res.ok) {
       const data = await res.json();
       if (data.voices && Array.isArray(data.voices)) {
@@ -490,22 +486,10 @@ function displayKeyStatus(message, type) {
 }
 
 function saveApiKey() {
-  const key = elements.apiKeyInput.value.trim();
-  state.apiKey = key;
-  if (key) {
-    localStorage.setItem('elevenlabs_api_key', key);
-    showToast('API Key saved successfully!', 'success');
-  } else {
-    localStorage.removeItem('elevenlabs_api_key');
-    showToast('Local API Key cleared.', 'info');
-  }
-  updateApiKeyStatusUI();
   closeApiKeyModal();
-
-  // Refresh dynamic models & voices using the new key
-  fetchModels();
-  fetchVoices();
 }
+
+
 
 // ==========================================
 // ElevenLabs Narration Workflow (The Play Action)
@@ -521,10 +505,9 @@ async function startNarration() {
   }
 
   // Validation: Check API key
-  const hasKey = Boolean(state.apiKey || state.hasEnvKey);
-  if (!hasKey) {
-    showToast('Please configure your ElevenLabs API Key to generate narration.', 'error');
-    openApiKeyModal();
+
+  if (!state.hasEnvKey) {
+    showToast('ElevenLabs API is not configured on the server.', 'error');
     return;
   }
 
@@ -546,7 +529,6 @@ async function startNarration() {
     };
 
     const headers = { 'Content-Type': 'application/json' };
-    if (state.apiKey) headers['x-api-key'] = state.apiKey;
 
     const response = await fetch('/api/narrate', {
       method: 'POST',
@@ -933,11 +915,11 @@ function showToast(message, type = 'info') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
 
-  const iconSvg = type === 'success' 
+  const iconSvg = type === 'success'
     ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>`
     : type === 'error'
-    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
-    : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9d7a64" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+      ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`
+      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9d7a64" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
 
   toast.innerHTML = `${iconSvg}<span>${escapeHtml(message)}</span>`;
   elements.toastContainer.appendChild(toast);
